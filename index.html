@@ -442,7 +442,6 @@ $1transform: translate(-50%, -50%) rotate(var(--deg)) translate(0, calc(-1 * var
     document.addEventListener('keydown',(e)=>{
       if (e.code==='Space' || e.code==='Enter'){ e.preventDefault(); btn.click(); }
     });
-
     // При ресайзе пересчитываем радиус и перерисовываем слоты
     window.addEventListener('resize', ()=>{ buildSlots(); });
 

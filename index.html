@@ -7,16 +7,7 @@
   <title>Колесо стройности — мини‑игра</title>
   <meta name="color-scheme" content="light only"/>
   <style>
-    :root{
-      /* Брендовые цвета ШАГАЙ ДОМА */
-      --r:#CF2C02; /* кораллово‑красный */
-      --y:#FFBA08; /* ярко‑жёлтый */
-      --o:#E85D04; /* оранжевый */
-      --g:#D9D9D9; /* светло‑серый */
-      --txt:#1a1a1a;
-      --ok:#18a957;
-      --err:#c02626;
-    }
+    :root{ --r:#CF2C02; --y:#FFBA08; --o:#E85D04; --txt:#1a1a1a; --ok:#18a957; --err:#c02626; --logoH:0px; }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
@@ -29,10 +20,7 @@
 .logo img{width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(0,0,0,.08))}
 .logo.left{left:10px; right:auto}
 
-.card{
-  background:#fff; border:1px solid #fff1c1; border-radius:20px; padding:18px;
-  box-shadow:0 6px 22px rgba(0,0,0,.06);
-}
+.card{position:relative;background:#fff;border:1px solid #fff1c1;border-radius:20px;padding:calc(32px + var(--logoH)) 20px 20px;box-shadow:0 6px 22px rgba(0,0,0,.06)}
 
 .title{font-weight:800; font-size:clamp(22px,4vw,32px); letter-spacing:0.2px;}
 .subtitle{margin-top:4px; color:#444; font-size:clamp(14px,2.5vw,16px)}
@@ -41,7 +29,7 @@
 @media (min-width:840px){ .playground{grid-template-columns: 1.1fr .9fr} }
 
 .wheel-wrap{display:grid; place-items:center; padding:10px}
-.wheel-box{position:relative; width:min(72vw,420px); aspect-ratio:1/1;}
+.wheel-box{position:relative;width:min(72vw,420px);aspect-ratio:1/1;margin-inline:auto;margin-top:clamp(40px,10vw,110px)}
 
 /* КОЛЕСО С СЕГМЕНТАМИ И ИКОНКАМИ */
 .wheel{
@@ -85,7 +73,7 @@
 
 /* Слоты с иконками вокруг колеса */
 .slot{ position:absolute; inset:0; transform-origin:50% 50%; }
-.slot img{ position:absolute; left:50%; top:50%; width:min(14vw,76px); height:auto; object-fit:contain; transform: translate(-50%, -50%) rotate(var(--deg)) translate(0, calc(-1 * var(--R))) rotate(calc(-1 * (var(--deg) + var(--spin)))); filter: drop-shadow(0 2px 6px rgba(0,0,0,.12)); pointer-events:none; }
+.slot img{position:absolute;left:50%;top:50%;width:calc(var(--icon,64)*1px);height:calc(var(--icon,64)*1px);object-fit:contain;transform:translate(-50%,-50%) rotate(var(--deg)) translate(0, calc(-1 * var(--R, 120px))) rotate(calc(-1 * (var(--deg) + var(--spin))));filter:drop-shadow(0 2px 6px rgba(0,0,0,.12));pointer-events:none;will-change:transform}
 
 .controls{display:grid; gap:10px; margin-top:8px; position:relative; z-index:2}
 .msg{min-height:44px; display:flex; align-items:center; justify-content:center; text-align:center; padding:8px 12px; border-radius:12px; background:#fff8d8; border:1px solid #ffe5a3}
@@ -428,83 +416,24 @@
       }
     }
 
-    function pulseAmulet(){
-      amuletCell.animate([
-        { transform:'scale(1)', boxShadow:'0 0 0 0 rgba(255,186,8,0)', filter:'drop-shadow(0 0 0 rgba(0,0,0,0))' },
-        { transform:'scale(1.25)', boxShadow:'0 0 0 12px rgba(255,186,8,.35)', filter:'drop-shadow(0 10px 18px rgba(0,0,0,.2))' },
-        { transform:'scale(1)', boxShadow:'0 0 0 0 rgba(255,186,8,0)', filter:'drop-shadow(0 0 0 rgba(0,0,0,0))' }
-      ], { duration:900, easing:'cubic-bezier(.2,.9,.2,1)' });
-    }
-    /* Мини‑конфетти без зависимостей */
-    function confettiLite(){
-      const n = 18; const box = document.body; const frags = [];
-      for (let i=0;i<n;i++){
-        const s = document.createElement('span');
-        s.style.cssText = `position:fixed; width:8px; height:12px; left:${50+ (Math.random()*20-10)}vw; top:10vh; background:${i%2? 'var(--y)':'var(--o)'}; transform: rotate(${Math.random()*360}deg); border-radius:2px; z-index:9999;`;
-        box.appendChild(s); frags.push(s);
-        const dx = (Math.random()*2-1)*30; const dy = 60 + Math.random()*40; const rt = (Math.random()*2-1)*360;
-        s.animate([
-          { transform:`translate(0,0) rotate(0deg)`, opacity:1 },
-          { transform:`translate(${dx}vw, ${dy}vh) rotate(${rt}deg)`, opacity:0 }
-        ], { duration:1200 + Math.random()*600, easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish = ()=> s.remove();
-      }
-    }
+    function pulseAmulet(){ amuletCell.animate([{transform:'scale(1)',filter:'drop-shadow(0 0 0 rgba(0,0,0,0))'},{transform:'scale(1.12)',filter:'drop-shadow(0 8px 16px rgba(0,0,0,.18))'},{transform:'scale(1)'}],{duration:700,easing:'cubic-bezier(.2,.9,.2,1)'}); }
 
-    /* Кнопка: два шага — крутить → остановить */
-    btn.addEventListener('click', ()=>{
-      if (state === STATE.IDLE || state === STATE.RESULT){ startSpin(); return; }
-      if (state === STATE.SPINNING || state === STATE.WAITING_STOP){ stopSpinAndResolve(); return; }
-    });
+    function confettiLite(){ const n=18; const box=document.body; for (let i=0;i<n;i++){ const s=document.createElement('span'); s.style.cssText=`position:fixed;width:8px;height:12px;left:${50+(Math.random()*20-10)}vw;top:10vh;background:${i%2?'#FFBA08':'#E85D04'};transform:rotate(${Math.random()*360}deg);border-radius:2px;z-index:9999;`; box.appendChild(s); const dx=(Math.random()*2-1)*30; const dy=60+Math.random()*40; const rt=(Math.random()*2-1)*360; s.animate([{transform:`translate(0,0) rotate(0deg)`,opacity:1},{transform:`translate(${dx}vw, ${dy}vh) rotate(${rt}deg)`,opacity:0}],{duration:1200+Math.random()*600,easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish=()=>s.remove(); } }
 
-    // Поддержка Enter/Space
-    document.addEventListener('keydown',(e)=>{
-      if (e.code==='Space' || e.code==='Enter'){ e.preventDefault(); btn.click(); }
-    });
+    /* Кнопки/клавиши */
+    btn.addEventListener('click', ()=>{ if (state===STATE.IDLE||state===STATE.RESULT){ startSpin(); } else if (state===STATE.SPINNING||state===STATE.WAITING_STOP){ stopSpinAndResolve(); } });
+    document.addEventListener('keydown',(e)=>{ if (e.code==='Space'||e.code==='Enter'){ e.preventDefault(); btn.click(); } });
 
-    // При ресайзе пересчитываем радиус и перерисовываем слоты
-    window.addEventListener('resize', ()=>{ buildSlots(); });
-
-    // === Modal events ===
-    amuletCell.addEventListener('click', openAmuletModal);
-    if (amulCloseBtn) amulCloseBtn.addEventListener('click', closeAmuletModal);
-    if (amuletModal){ amuletModal.addEventListener('click', (e)=>{ if (e.target === amuletModal) closeAmuletModal(); }); }
-    document.addEventListener('keydown',(e)=>{ if (e.key==='Escape') closeAmuletModal(); });
-
-    // чтобы логотип не наезжал на колесо — вычисляем и избегаем пересечений
-    function rectsOverlap(a,b){ return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom); }
-    function avoidLogoOverlap(){
-      if (!brandLogo || !wheelBox) return;
-      wheelBox.style.marginTop = '0px';
-      const lb = brandLogo.getBoundingClientRect();
-      const wb = wheelBox.getBoundingClientRect();
-      if (rectsOverlap(lb, wb)){
-        const overlapY = Math.min(lb.bottom, wb.bottom) - Math.max(lb.top, wb.top);
-        const push = Math.max(0, overlapY) + 12; // запас 12px
-        wheelBox.style.marginTop = push + 'px';
-      }
-    }
-    window.addEventListener('resize', avoidLogoOverlap);
-    window.addEventListener('scroll', avoidLogoOverlap, { passive:true });
+    // Модал амулета
+    amuletCell.addEventListener('click', ()=>{ if (!amuletClaimedToday()){ showToast('Сначала поймайте амулет'); return; } amuletModal.classList.add('open'); });
+    amulCloseBtn.addEventListener('click', ()=> amuletModal.classList.remove('open'));
+    amuletModal.addEventListener('click', (e)=>{ if (e.target===amuletModal) amuletModal.classList.remove('open'); });
+    document.addEventListener('keydown',(e)=>{ if (e.key==='Escape') amuletModal.classList.remove('open'); });
 
     // Инициализация
     (function init(){
-      setMsg(MESSAGES.start);
-      updateAmuletBar();
-      preloadImages(['amulet.png','logo.png', ...ORDER, 'stop.mp3', 'win.mp3']);
-      layout = shuffleWithConstraint(ORDER);
-      buildSlots();
-      avoidLogoOverlap();
-      if (resultWrap) resultWrap.style.display = 'none';
-      const logoEl = document.getElementById('brandLogo');
-      if (logoEl) logoEl.classList.toggle('left', LOGO_CORNER === 'left');
-      function updateLogoPad(){
-        const h = logoEl ? logoEl.offsetHeight : 0;
-        document.documentElement.style.setProperty('--logo-h', (h ? h + 16 : 0) + 'px');
-      }
-      updateLogoPad();
-      window.addEventListener('resize', updateLogoPad);
-      const logoImg = logoEl ? logoEl.querySelector('img') : null;
-      if (logoImg && !logoImg.complete) logoImg.addEventListener('load', updateLogoPad);
+      setMsg(MESSAGES.start); updateAmuletBar(); preloadImages(['amulet.png','logo.png', ...ORDER, 'stop.mp3','win.mp3']);
+      layout = shuffleWithConstraint(ORDER); buildSlots(); if (resultWrap) resultWrap.style.display='none';
     })();
   </script>
 </body>

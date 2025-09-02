@@ -85,15 +85,9 @@
 
 /* Слоты с иконками вокруг колеса */
 .slot{ position:absolute; inset:0; transform-origin:50% 50%; }
-.slot img{
-  position:absolute; left:50%; top:50%;
-  width:min(14vw,76px); height:auto; object-fit:contain;
-  /* 1) центрируем, 2) выносим к краю по радиусу, 3) контр‑поворот, чтобы иконка не крутилась */
-  transform: translate(-50%, -50%) rotate(var(--deg)) translate(0, calc(-1 * var(--R))) rotate(calc(-1 * var(--spin)));
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,.12));
-}
+$1transform: translate(-50%, -50%) rotate(var(--deg)) translate(0, calc(-1 * var(--R))) rotate(calc(-1 * (var(--deg) + var(--spin))));$3
 
-.controls{display:grid; gap:10px; margin-top:8px}
+.controls{display:grid; gap:10px; margin-top:8px; position:relative; z-index:2}
 .msg{min-height:44px; display:flex; align-items:center; justify-content:center; text-align:center; padding:8px 12px; border-radius:12px; background:#fff8d8; border:1px solid #ffe5a3}
 .msg b{color:var(--o)}
 .btn{
@@ -470,10 +464,12 @@
       if (logoEl) logoEl.classList.toggle('left', LOGO_CORNER === 'left');
       function updateLogoPad(){
         const h = logoEl ? logoEl.offsetHeight : 0;
-        document.documentElement.style.setProperty('--logo-h', (h? h+8 : 0) + 'px');
+        document.documentElement.style.setProperty('--logo-h', (h ? h + 16 : 0) + 'px');
       }
       updateLogoPad();
       window.addEventListener('resize', updateLogoPad);
+      const logoImg = logoEl ? logoEl.querySelector('img') : null;
+      if (logoImg && !logoImg.complete) logoImg.addEventListener('load', updateLogoPad);
     })();
   </script>
 </body>

@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Колесо стройности — стабильная версия</title>
+  <title>Колесо стройности</title>
   <meta name="color-scheme" content="light only"/>
   <style>
     :root{ --r:#CF2C02; --y:#FFBA08; --o:#E85D04; --txt:#1a1a1a; --ok:#18a957; --err:#c02626; }
@@ -126,7 +126,7 @@
     const ORDER  = [...UNSAFE, ...SAFE]; // 12 шт.
     let layout = [...ORDER];
 
-    const MESSAGES = { start:'Нажмите «Вращать», чтобы запустить колесо удачи.', stopCall:'Остановите колесо на <b>съедобном</b>, чтобы получить амулет!', thinking:'Колесо крутится…', stopped:'Колесо остановлено. Смотрим результат…' };
+    const MESSAGES = { start:'Нажмите «Вращать», чтобы запустить колесо удачи.', stopCall:'Остановите колесо на   <b>съедобном</b>, чтобы получить амулет!', thinking:'Колесо крутится…', stopped:'Колесо остановлено. Смотрим результат…' };
 
     /* === Ограничение амулета 1/день === */
     const LS_KEY = 'sd_amulet_claimed_on_v1';
@@ -184,7 +184,7 @@
 
     /* Рисуем иконки по кругу */
     function buildSlots(){
-      const size = wheel.offsetWidth || 360;            // диаметр колеса
+      const size = wheel.offsetWidth || 300;            // диаметр колеса
       const icon = Math.round(Math.max(48, Math.min(size*0.18, 84))); // 18% от диаметра, 48–84px
       const R = Math.round(size/2 - icon/2 - 18);       // до края, минус половина иконки и отступ
       wheel.style.setProperty('--R', R + 'px');

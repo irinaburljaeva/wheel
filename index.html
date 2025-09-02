@@ -145,7 +145,7 @@
   <div class="playground">
     <!-- Левая колонка: колесо -->
     <div class="wheel-wrap">
-      <div class="wheel-box">
+      <div id="wheelBox" class="wheel-box">
         <div id="pointer" class="pointer" aria-hidden="true"></div>
         <div id="wheel" class="wheel" aria-hidden="true"></div>
       </div>
@@ -225,6 +225,8 @@
     const resultText = document.getElementById('resultText');
     const thumbPh = document.getElementById('thumbPlaceholder');
     const resultWrap = document.getElementById('resultWrap');
+    const wheelBox = document.getElementById('wheelBox');
+    const brandLogo = document.getElementById('brandLogo');
     const amuletCell = document.getElementById('amuletCell');
     const amuletStatus = document.getElementById('amuletStatus');
     const amuletHint = document.getElementById('amuletHint');
@@ -270,24 +272,26 @@
 
     /* Рисуем иконки по кругу — сразу видны пользователю */
     function buildSlots(){
-      // радиус выкладки = 38% от диаметра
-      const size = wheel.offsetWidth || 360;
-      const R = Math.round(size * 0.38);
+      const size = wheel.offsetWidth || 360;            // диаметр колеса
+      const icon = Math.round(Math.max(48, Math.min(size*0.18, 84))); // 18% от диаметра, 48–84px
+      const R = Math.round(size/2 - icon/2 - 18);       // до края, минус половина иконки и отступ
       wheel.style.setProperty('--R', R + 'px');
+      wheel.style.setProperty('--icon', icon);
 
-      // очистить старые слоты (если ресайз)
       [...wheel.querySelectorAll('.slot')].forEach(n=>n.remove());
-
       layout.forEach((file, i)=>{
         const slot = document.createElement('div');
         slot.className = 'slot';
-        slot.style.setProperty('--deg', (i*30) + 'deg'); // 12 сегментов
-
+        slot.style.setProperty('--deg', (i*30) + 'deg');
         const img = document.createElement('img');
         img.src = file; img.alt = file.replace('.png','');
-        slot.appendChild(img);
-        wheel.appendChild(slot);
+        img.onerror = () => { img.style.opacity = .25; img.title = 'Файл не найден: ' + file; };
+        slot.appendChild(img); wheel.appendChild(slot);
       });
+
+      // после перестройки — подвинем колесо, если лого перекрывает
+      avoidLogoOverlap();
+    });
     }
 
     function startSpin(){
@@ -295,6 +299,7 @@
       // новая раскладка перед каждым раундом
       layout = shuffle([...ORDER]);
       buildSlots();
+      avoidLogoOverlap();
       angle = 0; applyWheelRotation();
       // скрываем блок результата до остановки
       if (resultWrap) resultWrap.style.display = 'none';
@@ -441,19 +446,36 @@
     // При ресайзе пересчитываем радиус и перерисовываем слоты
     window.addEventListener('resize', ()=>{ buildSlots(); });
 
-        // === Modal events ===
+    // === Modal events ===
     amuletCell.addEventListener('click', openAmuletModal);
     if (amulCloseBtn) amulCloseBtn.addEventListener('click', closeAmuletModal);
     if (amuletModal){ amuletModal.addEventListener('click', (e)=>{ if (e.target === amuletModal) closeAmuletModal(); }); }
-    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeAmuletModal(); });
+    document.addEventListener('keydown',(e)=>{ if (e.key==='Escape') closeAmuletModal(); });
+
+    // чтобы логотип не наезжал на колесо — вычисляем и избегаем пересечений
+    function rectsOverlap(a,b){ return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom); }
+    function avoidLogoOverlap(){
+      if (!brandLogo || !wheelBox) return;
+      wheelBox.style.marginTop = '0px';
+      const lb = brandLogo.getBoundingClientRect();
+      const wb = wheelBox.getBoundingClientRect();
+      if (rectsOverlap(lb, wb)){
+        const overlapY = Math.min(lb.bottom, wb.bottom) - Math.max(lb.top, wb.top);
+        const push = Math.max(0, overlapY) + 12; // запас 12px
+        wheelBox.style.marginTop = push + 'px';
+      }
+    }
+    window.addEventListener('resize', avoidLogoOverlap);
+    window.addEventListener('scroll', avoidLogoOverlap, { passive:true });
 
     // Инициализация
     (function init(){
       setMsg(MESSAGES.start);
       updateAmuletBar();
       preloadImages(['amulet.png','logo.png', ...ORDER, 'stop.mp3', 'win.mp3']);
-      layout = shuffle([...ORDER]);
+      layout = shuffleWithConstraint(ORDER);
       buildSlots();
+      avoidLogoOverlap();
       if (resultWrap) resultWrap.style.display = 'none';
       const logoEl = document.getElementById('brandLogo');
       if (logoEl) logoEl.classList.toggle('left', LOGO_CORNER === 'left');

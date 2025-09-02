@@ -25,8 +25,9 @@
       display:flex; align-items:center; justify-content:center;
     }
     .app{width:min(920px,96vw); padding:24px; position:relative}/* ЛОГО в правом верхнем углу */
-.logo{position:absolute; top:16px; right:16px; width:min(20vw,120px); aspect-ratio:1/1; z-index:10;}
-.logo img{width:100%; height:100%; object-fit:contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,.08));}
+.logo{position:fixed; top:10px; right:10px; width:min(22vw,120px); aspect-ratio:1/1; z-index:1000; pointer-events:none}
+.logo img{width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(0,0,0,.08))}
+.logo.left{left:10px; right:auto}
 
 .card{
   background:#fff; border:1px solid #fff1c1; border-radius:20px; padding:18px;
@@ -110,11 +111,9 @@
 .result .thumb img{ width:100%; height:100%; object-fit:contain; }
 .result .text{ font-size:clamp(15px,2.7vw,18px); }
 
-.amulet-bar{
-  margin-top:6px; display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:14px; background:#fff; border:1px dashed #ffd27a
-}
-.amulet{ width:48px; height:48px; border-radius:12px; background:#fff; border:1px solid #ffe5a3; display:grid; place-items:center; overflow:hidden }
-.amulet img{ width:80%; height:80%; object-fit:contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,.08)); }
+.amulet-bar{ margin-top:10px; display:flex; align-items:center; gap:16px; padding:12px 14px; border-radius:16px; background:linear-gradient(180deg,#fffdf3,#fff9df); border:2px dashed #ffc84a; box-shadow:0 8px 18px rgba(0,0,0,.06) }
+.amulet{ width:88px; height:88px; border-radius:16px; background:#fff; border:3px solid #ffd27a; display:grid; place-items:center; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,.08) }
+.amulet img{ width:92%; height:92%; object-fit:contain; filter:drop-shadow(0 2px 2px rgba(0,0,0,.12)) }
 .amulet.locked img{ filter: grayscale(.92) opacity(.5) }
 .ok{ color:var(--ok); font-weight:700 }
 .err{ color:var(--err); font-weight:700 }
@@ -129,7 +128,7 @@
 <body>
   <div class="app">
     <!-- ЛОГО -->
-    <div class="logo" aria-label="Логотип">
+    <div id="brandLogo" class="logo" aria-label="Логотип">
       <img src="logo.png" alt="ШАГАЙ ДОМА — логотип"/>
     </div><div class="card">
   <div class="title">Колесо стройности</div>
@@ -182,7 +181,8 @@
     ];
     const SAFE = ['chicken.png'];
     const ORDER = [...UNSAFE, ...SAFE]; // 12 сегментов (11 несъедобных + 1 съедобный)
-    let layout = [...ORDER]; // текущая раскладка (перемешивается каждый раунд)
+    let layout = [...ORDER];
+    const LOGO_CORNER = 'right'; // поменяйте на 'left', чтобы перенести логотип в левый верхний угол // текущая раскладка (перемешивается каждый раунд)
 
     const MESSAGES = {
       start: 'Нажмите «Вращать», чтобы запустить колесо удачи.',
@@ -383,7 +383,11 @@
 
     function pulseAmulet(){
       amuletCell.animate([
-        { transform:'scale(1)', filter:'drop-shadow(0 0 0 rgba(0,0,0,0))' },
+        { transform:'scale(1)', boxShadow:'0 0 0 0 rgba(255,186,8,0)', filter:'drop-shadow(0 0 0 rgba(0,0,0,0))' },
+        { transform:'scale(1.25)', boxShadow:'0 0 0 12px rgba(255,186,8,.35)', filter:'drop-shadow(0 10px 18px rgba(0,0,0,.2))' },
+        { transform:'scale(1)', boxShadow:'0 0 0 0 rgba(255,186,8,0)', filter:'drop-shadow(0 0 0 rgba(0,0,0,0))' }
+      ], { duration:900, easing:'cubic-bezier(.2,.9,.2,1)' });
+    },
         { transform:'scale(1.12)', filter:'drop-shadow(0 8px 16px rgba(0,0,0,.18))' },
         { transform:'scale(1)' }
       ], { duration:700, easing:'cubic-bezier(.2,.9,.2,1)' });
@@ -423,7 +427,10 @@
       setMsg(MESSAGES.start);
       updateAmuletBar();
       preloadImages(['amulet.png','logo.png', ...ORDER, 'stop.mp3', 'win.mp3']);
+      layout = shuffle([...ORDER]); // случайная раскладка при загрузке страницы
       buildSlots();
+      const logoEl = document.getElementById('brandLogo');
+      if (logoEl) logoEl.classList.toggle('left', LOGO_CORNER === 'left');
     })();
   </script></body>
-  </html>
+</html>

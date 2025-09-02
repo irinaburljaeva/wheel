@@ -4,17 +4,17 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Колесо стройности — версия с шапкой</title>
+  <title>Колесо стройности — стабильная версия</title>
   <meta name="color-scheme" content="light only"/>
   <style>
     :root{ --r:#CF2C02; --y:#FFBA08; --o:#E85D04; --txt:#1a1a1a; --ok:#18a957; --err:#c02626; }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--txt);background:linear-gradient(180deg,#fff,#fff8e1 35%,#fff3d1);}/* ===== ШАПКА С ЛОГО ===== */
-.site-header{position:sticky; top:0; z-index:1000; background:linear-gradient(180deg,#ffffff, #fff6d5); padding:8px 16px; box-shadow:0 2px 12px rgba(0,0,0,.06);display: flex; justify-content: flex-end; align-items: center;}
-.brand{display:block; width:min(28vw,140px); height:auto}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--txt);background:linear-gradient(180deg,#fff,#fff8e1 35%,#fff3d1)}/* ===== ШАПКА С ЛОГО ===== */
+.site-header{position:sticky; top:0; z-index:1000; background:linear-gradient(180deg,#ffffff, #fff6d5); padding:8px 16px; box-shadow:0 2px 12px rgba(0,0,0,.06); display:flex; justify-content:flex-end; align-items:center }
+.brand{display:block; width:clamp(96px,12vw,180px); height:auto}
 
-.app{width:min(920px,96vw); margin:16px auto; padding:0 12px}
+.app{width:min(1100px,96vw); margin:16px auto; padding:0 12px}
 
 /* Карточка игры */
 .card{position:relative;background:#fff;border:1px solid #fff1c1;border-radius:20px;padding:20px;box-shadow:0 6px 22px rgba(0,0,0,.06)}
@@ -23,10 +23,10 @@
 .subtitle{margin-top:4px;color:#444;font-size:clamp(14px,2.5vw,16px)}
 
 .play{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
-@media (min-width:840px){ .play{grid-template-columns:1.1fr .9fr} }
+@media (min-width:1024px){ .play{grid-template-columns:1fr 1fr} } }
 
-.wheel-box{position:relative;width:min(72vw,420px);aspect-ratio:1/1;margin-inline:auto;margin-top:clamp(28px,8vw,96px)}
-.pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:22px solid var(--r);filter:drop-shadow(0 4px 6px rgba(0,0,0,.18));z-index:2}
+.wheel-box{position:relative;width:clamp(300px, 48vmin, 520px);aspect-ratio:1/1;margin-inline:auto;margin-top:clamp(20px,6vw,64px)}
+.pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:22px solid var(--r);filter:drop-shadow(0 4px 6px rgba(0,0,0,.18));z-index:3}
 
 /* Само колесо */
 .wheel{position:absolute;inset:0;border-radius:50%;
@@ -38,13 +38,17 @@
     var(--y) 240deg 270deg, var(--o) 270deg 300deg,
     var(--y) 300deg 330deg, var(--o) 330deg 360deg);
   border:10px solid #fff; box-shadow: inset 0 0 0 10px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.10);
-  --spin:0deg; --R:0px; --icon:64; z-index:0; pointer-events:none }
-.wheel::after{content:"";position:absolute;inset:0;margin:auto;width:18%;aspect-ratio:1/1;border-radius:50%;background:radial-gradient(#fff,#ffe6a8 55%,#ffd66d);border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:1}
+  /* динамические переменные */
+  --spin: 0deg; --R: 120px; --icon: 72px;
+  z-index:1; pointer-events:none }
+.wheel::after{content:"";position:absolute;inset:0;margin:auto;width:18%;aspect-ratio:1/1;border-radius:50%;background:radial-gradient(#fff,#ffe6a8 55%,#ffd66d);border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:2}
 
-.slot{position:absolute;inset:0;transform-origin:50% 50%;z-index:2; will-change:transform}
-.slot img{position:absolute;left:50%;top:50%;width:calc(var(--icon,64)*1px);height:calc(var(--icon,64)*1px);object-fit:contain;transform:translate(-50%,-50%) translate(0, calc(-1 * var(--R, 120px))) rotate(calc(-1 * var(--spin)));filter:drop-shadow(0 2px 6px rgba(0,0,0,.12));pointer-events:none;will-change:transform}
+/* Слоты с иконками */
+.slot{position:absolute;inset:0;transform-origin:50% 50%;z-index:2}
+.slot-inner{ position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) translate(0, calc(-1 * var(--R))); }
+.slot-inner img{ width:var(--icon); height:var(--icon); object-fit:contain; display:block; transform: rotate(calc(-1 * var(--spin))); filter:drop-shadow(0 2px 6px rgba(0,0,0,.12)); pointer-events:none }
 
-.controls{display:grid;gap:10px;margin-top:8px;position:relative;z-index:3}
+.controls{display:grid;gap:10px;margin-top:8px;position:relative;z-index:4}
 .msg{min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 12px;border-radius:12px;background:#fff8d8;border:1px solid #ffe5a3}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;user-select:none;background:linear-gradient(180deg,#FFBA08,#ffc43a 40%,#ffb60f);color:#3a2a00;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:14px 18px;border:0;border-radius:999px;box-shadow:0 10px 18px rgba(233,147,0,.28),0 3px 0 #eaa200 inset;transition:transform .08s ease}
 .btn:active{transform:translateY(1px)}
@@ -57,7 +61,7 @@
 .ok{color:var(--ok);font-weight:700} .err{color:var(--err);font-weight:700}
 
 .result{display:none;gap:12px}
-.result .thumb{width:min(56vw,280px);aspect-ratio:1/1;border-radius:18px;border:8px solid #fff;box-shadow:0 6px 22px rgba(0,0,0,.12);overflow:hidden;background:#fff;display:grid;place-items:center}
+.result .thumb{width:clamp(220px, 26vmin, 320px);aspect-ratio:1/1;border-radius:18px;border:8px solid #fff;box-shadow:0 6px 22px rgba(0,0,0,.12);overflow:hidden;background:#fff;display:grid;place-items:center}
 .result .thumb img{width:100%;height:100%;object-fit:contain}
 .result .text{font-size:clamp(15px,2.7vw,18px)}
 
@@ -184,17 +188,19 @@
       const icon = Math.round(Math.max(48, Math.min(size*0.18, 84))); // 18% от диаметра, 48–84px
       const R = Math.round(size/2 - icon/2 - 18);       // до края, минус половина иконки и отступ
       wheel.style.setProperty('--R', R + 'px');
-      wheel.style.setProperty('--icon', icon);
+      wheel.style.setProperty('--icon', icon + 'px');
 
+      // очистить
       [...wheel.querySelectorAll('.slot')].forEach(n=>n.remove());
+
       layout.forEach((file, i)=>{
         const slot = document.createElement('div');
         slot.className = 'slot';
-        // вращаем ВЕСЬ слот на угол сектора – надёжнее для мобильных Safari
-        slot.style.transform = `rotate(${i*30}deg)`;
+        slot.style.transform = `rotate(${i*30}deg)`; // 12 секторов
+        const inner = document.createElement('div'); inner.className = 'slot-inner';
         const img = document.createElement('img'); img.src = file; img.alt = file.replace('.png','');
         img.onerror = () => { img.style.opacity = .25; img.title = 'Файл не найден: ' + file; };
-        slot.appendChild(img); wheel.appendChild(slot);
+        inner.appendChild(img); slot.appendChild(inner); wheel.appendChild(slot);
       });
     }
 
@@ -202,7 +208,7 @@
 
     function startSpin(){
       if (state !== STATE.IDLE && state !== STATE.RESULT) return;
-      layout = shuffleWithConstraint(ORDER); // случайная раскладка + правило
+      layout = shuffleWithConstraint(ORDER);
       buildSlots();
       angle = 0; applyWheelRotation();
       if (resultWrap) resultWrap.style.display = 'none';
@@ -224,7 +230,8 @@
       const finalAngle = angle + 720 + delta; // +2 оборота
       cancelAnimationFrame(rafId);
       const t0 = performance.now(); const duration = 1200; const ease = x=>1-Math.pow(1-x,3);
-      function frame(now){ const p=Math.min(1,(now-t0)/duration); angle = angle + (finalAngle - angle) * ease(p); applyWheelRotation(); if(p<1) requestAnimationFrame(frame); else onForcedStopResult(pickFile);} requestAnimationFrame(frame);
+      const start = angle;
+      function frame(now){ const p=Math.min(1,(now-t0)/duration); angle = start + (finalAngle - start) * ease(p); applyWheelRotation(); if(p<1) requestAnimationFrame(frame); else onForcedStopResult(pickFile);} requestAnimationFrame(frame);
     }
 
     function onForcedStopResult(file){
@@ -237,9 +244,9 @@
       if (resultWrap) resultWrap.style.display = 'grid';
       resultImg.src=file; resultImg.alt='Выпало: '+file; resultImg.style.display='block';
       if (file==='burger.png'){
-        resultText.innerHTML = '<b style="color:var(--err)">Ой!</b> Шаман Галина увидела это и сильно разозлилась!<br>Нет‑нет. Такое мы на нашем острове стройности не едим!'; showToast('Бургер — несъедобное для острова');
+        resultText.innerHTML = '<b style="color:var(--err)">Ой!</b> Шаман Галина увидела ваш ответ и сильно разозлилась!<br>Нет‑нет. Такое мы на нашем острове стройности не едим!'; showToast('Бургер — несъедобное для острова');
       } else if (file==='chicken.png'){
-        if(!amuletClaimedToday()){ setAmuletClaimed(); updateAmuletBar(); resultText.innerHTML='<b class="ok">Поздравляем!</b> Это съедобное. Амулет ваш!'; pulseAmulet(); confettiLite(); try{ if(navigator.vibrate) navigator.vibrate([30,40,30]); }catch(e){} try{ new Audio('win.mp3').play().catch(()=>{});}catch(e){} }
+        if(!amuletClaimedToday()){ setAmuletClaimed(); updateAmuletBar(); resultText.innerHTML='<b class="ok">Поздравляем!</b> Это съедобное. Амулет ваш!'; pulseAmulet(); try{ if(navigator.vibrate) navigator.vibrate([30,40,30]); }catch(e){} try{ new Audio('win.mp3').play().catch(()=>{});}catch(e){} }
         else { resultText.innerHTML='Это съедобное, но лимит амулетов на сегодня уже исчерпан. Приходите завтра!'; showToast('Амулет уже получен сегодня'); }
       } else {
         resultText.textContent='Несъедобное… Попробуйте ещё раз!'; showToast('Увы, не съедобное');
@@ -247,8 +254,6 @@
     }
 
     function pulseAmulet(){ amuletCell.animate([{transform:'scale(1)',filter:'drop-shadow(0 0 0 rgba(0,0,0,0))'},{transform:'scale(1.12)',filter:'drop-shadow(0 8px 16px rgba(0,0,0,.18))'},{transform:'scale(1)'}],{duration:700,easing:'cubic-bezier(.2,.9,.2,1)'}); }
-
-    function confettiLite(){ const n=18; const box=document.body; for (let i=0;i<n;i++){ const s=document.createElement('span'); s.style.cssText=`position:fixed;width:8px;height:12px;left:${50+(Math.random()*20-10)}vw;top:10vh;background:${i%2?'#FFBA08':'#E85D04'};transform:rotate(${Math.random()*360}deg);border-radius:2px;z-index:9999;`; box.appendChild(s); const dx=(Math.random()*2-1)*30; const dy=60+Math.random()*40; const rt=(Math.random()*2-1)*360; s.animate([{transform:`translate(0,0) rotate(0deg)`,opacity:1},{transform:`translate(${dx}vw, ${dy}vh) rotate(${rt}deg)`,opacity:0}],{duration:1200+Math.random()*600,easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish=()=>s.remove(); } }
 
     /* Кнопки/клавиши */
     btn.addEventListener('click', ()=>{ if (state===STATE.IDLE||state===STATE.RESULT){ startSpin(); } else if (state===STATE.SPINNING||state===STATE.WAITING_STOP){ stopSpinAndResolve(); } });
@@ -264,6 +269,8 @@
     (function init(){
       setMsg(MESSAGES.start); updateAmuletBar(); preloadImages(['amulet.png','logo.png', ...ORDER, 'stop.mp3','win.mp3']);
       layout = shuffleWithConstraint(ORDER); buildSlots(); if (resultWrap) resultWrap.style.display='none';
+      // применяем первоначальный угол (0) — для корректной контр‑ротации
+      applyWheelRotation();
     })();
   </script></body>
 </html>

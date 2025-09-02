@@ -123,6 +123,20 @@
 .toast{ position:fixed; bottom:18px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:12px; background: #101010; color:#fff; box-shadow: 0 12px 24px rgba(0,0,0,.25); opacity:0; pointer-events:none; transition: opacity .25s ease }
 .toast.show{ opacity:1 }
 
+/* ====== AMULET MODAL (zoom) ====== */
+.amul-modal{ position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.45); z-index:2000 }
+.amul-modal.open{ display:grid; animation:amulFade .18s ease-out }
+@keyframes amulFade{ from{opacity:0} to{opacity:1} }
+.amul-modal__content{ position:relative; background:linear-gradient(180deg,#fffdf6,#fff8dc); padding:18px; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.35); border:2px solid #ffe29e }
+.amul-modal__content img{ width:min(80vw,380px); height:auto; display:block }
+.amul-close{ position:absolute; top:10px; right:10px; font-size:22px; line-height:1; background:#fff; border:1px solid #ffe29e; border-radius:999px; width:34px; height:34px; display:grid; place-items:center; cursor:pointer }
+/* === overrides & fixes === */
+:root{ --logo-h:0px; }
+.app{ padding:calc(24px + var(--logo-h)) 24px 24px; }
+.wheel{ z-index:0; overflow:visible; }
+.wheel::before, .wheel::after{ z-index:0; }
+.slot{ z-index:1; }
+
   </style>
 </head>
 <body>
@@ -145,7 +159,6 @@
       <div class="controls">
         <div id="msg" class="msg">Нажмите «Вращать», чтобы запустить колесо удачи.</div>
         <button id="btn" class="btn">Вращать</button>
-        <div class="hint">Подсказка: съедобное — это <b>курочка</b> 🍗</div>
       </div>
 
       <div class="amulet-bar">
@@ -158,7 +171,7 @@
     </div>
 
     <!-- Правая колонка: результат -->
-    <div class="result">
+    <div id="resultWrap" class="result">
       <div class="thumb" id="resultThumb" aria-live="polite" aria-atomic="true">
         <img id="resultImg" alt="Результат" src="" style="display:none"/>
         <div id="thumbPlaceholder" style="opacity:.6; font-weight:700; text-align:center; padding:20px;">
@@ -171,6 +184,12 @@
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="amuletModal" class="amul-modal" aria-hidden="true">
+  <div class="amul-modal__content" role="dialog" aria-modal="true" aria-label="Увеличенный амулет">
+    <button class="amul-close" type="button" aria-label="Закрыть">×</button>
+    <img src="amulet.png" alt="Амулет крупно" />
+  </div>
+</div>
 
   </div>  <script>
     /* =====================
@@ -211,10 +230,18 @@
     const resultImg = document.getElementById('resultImg');
     const resultText = document.getElementById('resultText');
     const thumbPh = document.getElementById('thumbPlaceholder');
+    const resultWrap = document.getElementById('resultWrap');
     const amuletCell = document.getElementById('amuletCell');
     const amuletStatus = document.getElementById('amuletStatus');
     const amuletHint = document.getElementById('amuletHint');
     const toast = document.getElementById('toast');
+    const amuletModal = document.getElementById('amuletModal');
+    const amulCloseBtn = amuletModal ? amuletModal.querySelector('.amul-close') : null;
+    function openAmuletModal(){
+      if (!amuletClaimedToday()){ showToast('Сначала поймайте амулет'); return; }
+      if (amuletModal) amuletModal.classList.add('open');
+    }
+    function closeAmuletModal(){ if (amuletModal) amuletModal.classList.remove('open'); }
 
     /* =====================
        Стейт-машина
@@ -275,6 +302,8 @@
       layout = shuffle([...ORDER]);
       buildSlots();
       angle = 0; applyWheelRotation();
+      // скрываем блок результата до остановки
+      if (resultWrap) resultWrap.style.display = 'none';
       // сброс результата
       resultImg.style.display='none'; resultImg.removeAttribute('src'); resultText.textContent=''; thumbPh.style.display='grid';
       // стартовая скорость
@@ -356,6 +385,7 @@
     }
 
     function showResult(file){
+      if (resultWrap) resultWrap.style.display = 'grid';
       thumbPh.style.display='none';
       resultImg.src = file; resultImg.alt = 'Выпало: ' + file; resultImg.style.display='block';
 
@@ -422,15 +452,29 @@
     // При ресайзе пересчитываем радиус и перерисовываем слоты
     window.addEventListener('resize', ()=>{ buildSlots(); });
 
+    // === Modal events ===
+    amuletCell.addEventListener('click', openAmuletModal);
+    if (amulCloseBtn) amulCloseBtn.addEventListener('click', closeAmuletModal);
+    if (amuletModal){ amuletModal.addEventListener('click', (e)=>{ if (e.target === amuletModal) closeAmuletModal(); }); }
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeAmuletModal(); });
+
     // Инициализация
     (function init(){
       setMsg(MESSAGES.start);
       updateAmuletBar();
       preloadImages(['amulet.png','logo.png', ...ORDER, 'stop.mp3', 'win.mp3']);
-      layout = shuffle([...ORDER]); // случайная раскладка при загрузке страницы
+      layout = shuffle([...ORDER]);
       buildSlots();
+      if (resultWrap) resultWrap.style.display = 'none';
       const logoEl = document.getElementById('brandLogo');
       if (logoEl) logoEl.classList.toggle('left', LOGO_CORNER === 'left');
+      function updateLogoPad(){
+        const h = logoEl ? logoEl.offsetHeight : 0;
+        document.documentElement.style.setProperty('--logo-h', (h? h+8 : 0) + 'px');
+      }
+      updateLogoPad();
+      window.addEventListener('resize', updateLogoPad);
     })();
-  </script></body>
+  </script>
+</body>
 </html>

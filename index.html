@@ -278,10 +278,10 @@
     function getWheelMaxPx(){
       const raw = getComputedStyle(document.documentElement).getPropertyValue('--wheelMax').trim();
       if (!raw) return 420;
-      if (raw.endsWith('vw')) return Math.max(200, (parseFloat(raw)||0) * window.innerWidth / 100);
-      if (raw.endsWith('px')) return Math.max(200, parseFloat(raw)||420);
+      if (raw.endsWith('vw')) return Math.max(300, (parseFloat(raw)||0) * window.innerWidth / 100);
+      if (raw.endsWith('px')) return Math.max(300, parseFloat(raw)||420);
       const n = parseFloat(raw);
-      return isNaN(n) ? 420 : Math.max(200, n);
+      return isNaN(n) ? 420 : Math.max(300, n);
     }
 
     /* Размер колеса под ширину И высоту окна (чтобы кнопка была видна) */

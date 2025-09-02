@@ -26,7 +26,7 @@
     :root{
       --r:#CF2C02; --y:#FFBA08; --o:#E85D04; --txt:#1a1a1a; --ok:#18a957; --err:#c02626;
       --hdr:0px;                 /* высота шапки (ставится из JS на мобилке) */
-      --wheelMax:480px;          /* базовый предел для колеса (мобайл/тач) */
+      --wheelMax:480px;          /* базовый предел диаметра колеса */
     }
 
     *{box-sizing:border-box}
@@ -63,14 +63,22 @@
 
     /* Колесо */
     .wheel-col{display:flex;flex-direction:column;align-items:center}
+
     .wheel-box{
       position:relative;
-      width:min(100%, var(--wheelMax));  /* НИКОГДА не шире контейнера (мобайл фикс) */
+      width:min(100%, var(--wheelMax));  /* НИКОГДА не шире контейнера (фикс моб. переполнения) */
+      aspect-ratio: 1 / 1;               /* ВСЕГДА резервируем квадрат под колесо (даже без JS) */
       height:auto;
       margin-inline:auto; margin-top:clamp(16px,5vw,32px);
       z-index:10;
       pointer-events:none; /* колесо не перехватывает клики поверх кнопки */
     }
+    /* Fallback для старых браузеров без aspect-ratio */
+    @supports not (aspect-ratio: 1 / 1){
+      .wheel-box::before{ content:""; display:block; padding-top:100%; }
+      .wheel{ position:absolute; inset:0; }
+    }
+
     .pointer{
       position:absolute; top:-10px; left:50%; transform:translateX(-50%);
       width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
@@ -160,11 +168,11 @@
       .site-header{ z-index:0; }
       .card{ position:relative; z-index:10; }
 
-      /* колесо крупнее и ближе к заголовку; зазор сверху меньше */
+      /* Колесо крупнее и ближе к заголовку; зазор сверху меньше */
       :root{ --wheelMax:560px; }
       .wheel-box{ margin-top:16px; }
 
-      /* меньше зазор между шапкой и карточкой на ПК */
+      /* Меньше зазор между шапкой и карточкой на ПК */
       .app{ margin:12px auto 16px; }
     }
     @media (min-width:1440px){ :root{ --wheelMax:600px; } }
@@ -243,7 +251,8 @@
 
     const MESSAGES = {
       start:'Нажмите «Вращать», чтобы запустить колесо удачи.',
-      stopCall:'Остановите колесо на <b>съедобном</b>, чтобы получить амулет!',
+      // неразрывный пробел перед жирным словом, чтобы не слипалось "на съедобном"
+      stopCall:'Остановите колесо на&nbsp;<b>съедобном</b>, чтобы получить амулет!',
       thinking:'Колесо крутится…',
       stopped:'Колесо остановлено. Смотрим результат…'
     };
@@ -272,9 +281,13 @@
     /* === Состояния === */
     const STATE = { IDLE:'IDLE', SPINNING:'SPINNING', WAITING_STOP:'WAITING_STOP', RESULT:'RESULT' };
     let state = STATE.IDLE; let rafId = 0; let angle = 0; let speed = 0;
-    const setState = s => state = s; const setMsg = html => msg.innerHTML = html;
+    const setState = s => state = s; const setMsg = html => (msg.innerHTML = html);
 
-    function showToast(text, ms=1600){ toast.textContent = text; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), ms); }
+    function showToast(text, ms=1600){
+      toast.textContent = text;
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'), ms);
+    }
 
     function updateAmuletBar(){
       if (amuletClaimedToday()){
@@ -292,7 +305,11 @@
 
     function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
     const MOD = (n,m)=>((n%m)+m)%m;
-    function areAdjacent(list, a, b){ const len=list.length; const ia=list.indexOf(a); const ib=list.indexOf(b); if (ia<0||ib<0) return false; return ib===MOD(ia+1,len) || ib===MOD(ia-1,len); }
+    function areAdjacent(list, a, b){
+      const len=list.length; const ia=list.indexOf(a); const ib=list.indexOf(b);
+      if (ia<0||ib<0) return false;
+      return ib===MOD(ia+1,len) || ib===MOD(ia-1,len);
+    }
     function shuffleWithConstraint(source){
       let res=[...source];
       for(let t=0;t<100;t++){ res=shuffle([...source]); if(!areAdjacent(res,'burger.png','chicken.png')) return res; }
@@ -339,8 +356,15 @@
       const maxByHeight = Math.max(260, window.innerHeight - headerH - reserve);
 
       const size = Math.max(260, Math.min(maxByWidth, maxByHeight));
-      wb.style.width  = size + 'px';
-      wb.style.height = size + 'px';
+
+      // Страховка от некорректных значений. Даже если что-то пошло не так — будет квадрат 360px.
+      if (!isFinite(size) || size <= 0){
+        wb.style.width  = '360px';
+        wb.style.height = '360px';
+      } else {
+        wb.style.width  = size + 'px';
+        wb.style.height = size + 'px';
+      }
 
       const icon = Math.round(Math.max(56, Math.min(size * 0.18, 96)));
       const R    = Math.round(size/2 - icon/2 - 18);
@@ -364,7 +388,10 @@
       });
     }
 
-    function applyWheelRotation(){ wheel.style.transform = `rotate(${angle}deg)`; wheel.style.setProperty('--spin', angle + 'deg'); }
+    function applyWheelRotation(){
+      wheel.style.transform = `rotate(${angle}deg)`;
+      wheel.style.setProperty('--spin', angle + 'deg');
+    }
 
     function startSpin(){
       if (state !== STATE.IDLE && state !== STATE.RESULT) return;
@@ -375,29 +402,47 @@
       if (resultWrap){ resultWrap.style.display = 'none'; resultWrap.classList.remove('show'); }
       resultImg.style.display='none'; resultImg.removeAttribute('src'); resultText.textContent='';
       speed = 720; setState(STATE.SPINNING); btn.disabled = true; btn.textContent = 'Крутится…'; setMsg(MESSAGES.thinking);
-      setTimeout(()=>{ setState(STATE.WAITING_STOP); btn.disabled = false; btn.textContent = 'Остановить'; setMsg(MESSAGES.stopCall); }, 900);
+      setTimeout(()=>{
+        setState(STATE.WAITING_STOP); btn.disabled = false; btn.textContent = 'Остановить'; setMsg(MESSAGES.stopCall);
+      }, 900);
+
       let last = performance.now(); cancelAnimationFrame(rafId);
-      function frame(now){ const dt=(now-last)/1000; last=now; angle=(angle+speed*dt)%360; applyWheelRotation(); if(state===STATE.SPINNING) speed=Math.max(360, speed-100*dt); rafId=requestAnimationFrame(frame);} rafId=requestAnimationFrame(frame);
+      function frame(now){
+        const dt=(now-last)/1000; last=now;
+        angle=(angle+speed*dt)%360; applyWheelRotation();
+        if(state===STATE.SPINNING) speed=Math.max(360, speed-100*dt);
+        rafId=requestAnimationFrame(frame);
+      }
+      rafId=requestAnimationFrame(frame);
     }
 
     function stopSpinAndResolve(){
-      if (state !== STATE.WAITING_STOP) return; setState(STATE.RESULT);
+      if (state !== STATE.WAITING_STOP) return;
+      setState(STATE.RESULT);
       btn.disabled = true; btn.textContent = 'Останавливаем…'; setMsg(MESSAGES.stopped);
-      const pickFile = (Math.random()<0.20) ? 'chicken.png' : UNSAFE[Math.floor(Math.random()*UNSAFE.length)];
+
+      const pickFile = (Math.random()<0.20) ? 'chicken.png'
+                        : UNSAFE[Math.floor(Math.random()*UNSAFE.length)];
       const targetIndex = layout.indexOf(pickFile);
       const currentDeg = ((angle%360)+360)%360;
       const centerDeg = (360 - (targetIndex*30)) % 360;
       const delta = (centerDeg - currentDeg + 360) % 360;
       const finalAngle = angle + 720 + delta; // +2 оборота
+
       cancelAnimationFrame(rafId);
       const t0 = performance.now(); const duration = 1200; const ease = x=>1-Math.pow(1-x,3);
       const start = angle;
-      function frame(now){ const p=Math.min(1,(now-t0)/duration); angle = start + (finalAngle - start) * ease(p); applyWheelRotation(); if(p<1) requestAnimationFrame(frame); else onForcedStopResult(pickFile);} requestAnimationFrame(frame);
+
+      function frame(now){
+        const p=Math.min(1,(now-t0)/duration);
+        angle = start + (finalAngle - start) * ease(p);
+        applyWheelRotation();
+        if(p<1) requestAnimationFrame(frame); else onForcedStopResult(pickFile);
+      }
+      requestAnimationFrame(frame);
     }
 
     function onForcedStopResult(file){
-      try{ if(navigator.vibrate) navigator.vibrate(60);}catch(e){}
-      function onForcedStopResult(file){
       try{ if(navigator.vibrate) navigator.vibrate(60);}catch(e){}
       try{ new Audio('stop.mp3').play().catch(()=>{});}catch(e){}
       showResult(file); btn.disabled=false; btn.textContent='Сыграть ещё'; setMsg(MESSAGES.start); setState(STATE.RESULT);
@@ -406,6 +451,7 @@
     function showResult(file){
       if (resultWrap){ resultWrap.style.display = ''; resultWrap.classList.add('show'); }
       resultImg.src=file; resultImg.alt='Выпало: '+file; resultImg.style.display='block';
+
       if (file==='burger.png'){
         resultText.innerHTML = '<b style="color:var(--err)">Ой!</b> Шаман Галина увидела ваш ответ и сильно разозлилась!<br>Нет-нет. Такое мы на нашем острове стройности не едим!';
         showToast('Бургер — несъедобное для острова');
@@ -436,11 +482,17 @@
     }
 
     /* Кнопки/клавиши */
-    btn.addEventListener('click', ()=>{ if (state===STATE.IDLE||state===STATE.RESULT){ startSpin(); } else if (state===STATE.SPINNING||state===STATE.WAITING_STOP){ stopSpinAndResolve(); } });
+    btn.addEventListener('click', ()=>{
+      if (state===STATE.IDLE||state===STATE.RESULT){ startSpin(); }
+      else if (state===STATE.SPINNING||state===STATE.WAITING_STOP){ stopSpinAndResolve(); }
+    });
     document.addEventListener('keydown',(e)=>{ if (e.code==='Space'||e.code==='Enter'){ e.preventDefault(); btn.click(); } });
 
     // Модал амулета
-    amuletCell.addEventListener('click', ()=>{ if (!amuletClaimedToday()){ showToast('Сначала поймайте амулет'); return; } amuletModal.classList.add('open'); });
+    amuletCell.addEventListener('click', ()=>{
+      if (!amuletClaimedToday()){ showToast('Сначала поймайте амулет'); return; }
+      amuletModal.classList.add('open');
+    });
     amulCloseBtn.addEventListener('click', ()=> amuletModal.classList.remove('open'));
     amuletModal.addEventListener('click', (e)=>{ if (e.target===amuletModal) amuletModal.classList.remove('open'); });
     document.addEventListener('keydown',(e)=>{ if (e.key==='Escape') amuletModal.classList.remove('open'); });
@@ -459,6 +511,11 @@
       window.addEventListener('load', padForHeader);
       window.addEventListener('resize', ()=>{ padForHeader(); sizeWheelBox(); buildSlots(); });
     })();
+
+    // Самотест: если элемент колеса не найден, предупредим в консоли (можно удалить)
+    window.addEventListener('DOMContentLoaded', ()=>{
+      if (!document.getElementById('wheel')) console.warn('wheel не найден в DOM');
+    });
   </script>
 </body>
 </html>

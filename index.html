@@ -270,6 +270,24 @@
     function preloadImages(paths){ paths.forEach(src=>{ const im=new Image(); im.src=src; }); }
     function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
 
+    // --- Перемешивание с ограничением: бургер не рядом с курицей ---
+    const MOD = (n,m)=>((n%m)+m)%m;
+    function areAdjacent(list, a, b){
+      const len=list.length; const ia=list.indexOf(a); const ib=list.indexOf(b);
+      if (ia<0||ib<0) return false;
+      return ib===MOD(ia+1,len) || ib===MOD(ia-1,len);
+    }
+    function shuffleWithConstraint(source){
+      let res=[...source];
+      for(let t=0;t<100;t++){ res=shuffle([...source]); if(!areAdjacent(res,'burger.png','chicken.png')) return res; }
+      const len=res.length; const ib=res.indexOf('burger.png'); let ic=res.indexOf('chicken.png');
+      const banned = new Set([ib, MOD(ib-1,len), MOD(ib+1,len)]);
+      const candidates=[]; for(let i=0;i<len;i++){ if(!banned.has(i)) candidates.push(i); }
+      const swapWith = candidates[Math.floor(Math.random()*candidates.length)];
+      [res[ic], res[swapWith]] = [res[swapWith], res[ic]];
+      return res;
+    }
+
     /* Рисуем иконки по кругу — сразу видны пользователю */
     function buildSlots(){
       const size = wheel.offsetWidth || 360;            // диаметр колеса
@@ -297,7 +315,7 @@
     function startSpin(){
       if (state !== STATE.IDLE && state !== STATE.RESULT) return;
       // новая раскладка перед каждым раундом
-      layout = shuffle([...ORDER]);
+      layout = shuffleWithConstraint(ORDER);
       buildSlots();
       avoidLogoOverlap();
       angle = 0; applyWheelRotation();

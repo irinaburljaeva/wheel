@@ -237,7 +237,7 @@
       if (resultWrap) resultWrap.style.display = 'grid';
       resultImg.src=file; resultImg.alt='Выпало: '+file; resultImg.style.display='block';
       if (file==='burger.png'){
-        resultText.innerHTML = '<b style="color:var(--err)">Ой!</b> Шаман Галина увидела ваш ответ и сильно разозлилась!<br>Нет‑нет. Такое мы на нашем острове стройности не едим!'; showToast('Бургер — несъедобное для острова');
+        resultText.innerHTML = '<b style="color:var(--err)">Ой!</b> Шаман Галина увидела это и сильно разозлилась!<br>Нет‑нет. Такое мы на нашем острове стройности не едим!'; showToast('Бургер — несъедобное для острова');
       } else if (file==='chicken.png'){
         if(!amuletClaimedToday()){ setAmuletClaimed(); updateAmuletBar(); resultText.innerHTML='<b class="ok">Поздравляем!</b> Это съедобное. Амулет ваш!'; pulseAmulet(); confettiLite(); try{ if(navigator.vibrate) navigator.vibrate([30,40,30]); }catch(e){} try{ new Audio('win.mp3').play().catch(()=>{});}catch(e){} }
         else { resultText.innerHTML='Это съедобное, но лимит амулетов на сегодня уже исчерпан. Приходите завтра!'; showToast('Амулет уже получен сегодня'); }

@@ -1,132 +1,200 @@
 <!doctype html>
-
 <html lang="ru">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Колесо стройности</title>
+  <title>Колесо стройности — стабильная версия</title>
   <meta name="color-scheme" content="light only"/>
   <style>
-    :root{ --r:#CF2C02; --y:#FFBA08; --o:#E85D04; --txt:#1a1a1a; --ok:#18a957; --err:#c02626; }
+    :root{
+      --r:#CF2C02; --y:#FFBA08; --o:#E85D04; --txt:#1a1a1a; --ok:#18a957; --err:#c02626;
+      --hdr:0px;                 /* высота шапки (ставится из JS) */
+      --wheelMax:520px;          /* верхний предел диаметра колеса на десктопе: поменяйте тут */
+    }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--txt);background:linear-gradient(180deg,#fff,#fff8e1 35%,#fff3d1)}/* ===== ШАПКА С ЛОГО ===== */
-.site-header{position:sticky; top:0; z-index:1000; background:linear-gradient(180deg,#ffffff, #fff6d5); padding:8px 16px; box-shadow:0 2px 12px rgba(0,0,0,.06); display:flex; justify-content:flex-end; align-items:center }
-.brand{display:block; width:clamp(96px,12vw,180px); height:auto}
+    body{
+      margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--txt);background:linear-gradient(180deg,#fff,#fff8e1 35%,#fff3d1);
+    }
 
-.app{width:min(1100px,96vw); margin:16px auto; padding:0 12px}
+    /* ===== ШАПКА С ЛОГО (вправо) ===== */
+    .site-header{
+      position:sticky; top:0;
+      z-index:1000; /* на мобилке шапка сверху; на десктопе опустим ниже колеса через @media */
+      background:linear-gradient(180deg,#ffffff,#fff6d5);
+      padding:8px 16px; box-shadow:0 2px 12px rgba(0,0,0,.06);
+      display:flex; justify-content:flex-end; align-items:center;
+    }
+    .brand{display:block; width:clamp(96px,12vw,180px); height:auto}
 
-/* Карточка игры */
-.card{position:relative;background:#fff;border:1px solid #fff1c1;border-radius:20px;padding:20px;box-shadow:0 6px 22px rgba(0,0,0,.06)}
+    /* Контейнер страницы — учитываем высоту хедера */
+    .app{width:min(1100px,96vw); margin:calc(var(--hdr) + 12px) auto 16px; padding:0 12px}
 
-.title{font-weight:800;font-size:clamp(22px,4vw,32px)}
-.subtitle{margin-top:4px;color:#444;font-size:clamp(14px,2.5vw,16px)}
+    /* Карточка игры */
+    .card{
+      position:relative;background:#fff;border:1px solid #fff1c1;border-radius:20px;
+      padding:20px;box-shadow:0 6px 22px rgba(0,0,0,.06)
+    }
+    .title{font-weight:800;font-size:clamp(22px,4vw,32px);margin:0 0 4px}
+    .subtitle{margin:0;color:#444;font-size:clamp(14px,2.5vw,16px)}
 
-.play{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
-@media (min-width:1024px){ .play{grid-template-columns:1fr 1fr} }
+    .play{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
+    @media (min-width:1024px){ .play{grid-template-columns:1fr 1fr} }
 
-.wheel-box{position:relative;width:min(92vw,520px);margin-inline:auto;margin-top:clamp(20px,6vw,48px)}
-/* стабильный квадрат даже в капризных браузерах */
-.wheel-box::before{content:"";display:block;padding-top:100%} 
-.pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:22px solid var(--r);filter:drop-shadow(0 4px 6px rgba(0,0,0,.18));z-index:3}
+    /* Колесо */
+    .wheel-col{display:flex;flex-direction:column;align-items:center}
+    .wheel-box{
+      position:relative;
+      width:min(92vw,var(--wheelMax));  /* можно править --wheelMax или заменить здесь */
+      height:auto;
+      margin-inline:auto; margin-top:clamp(20px,6vw,48px);
+      z-index:10; /* выше шапки на десктопе (см. @media ниже) */
+    }
+    .pointer{
+      position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+      width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
+      border-bottom:22px solid var(--r); filter:drop-shadow(0 4px 6px rgba(0,0,0,.18)); z-index:3
+    }
 
-/* Само колесо */
-.wheel{position:absolute;inset:0;border-radius:50%;
-  background:conic-gradient(from -15deg,
-    var(--y) 0deg 30deg, var(--o) 30deg 60deg,
-    var(--y) 60deg 90deg, var(--o) 90deg 120deg,
-    var(--y) 120deg 150deg, var(--o) 150deg 180deg,
-    var(--y) 180deg 210deg, var(--o) 210deg 240deg,
-    var(--y) 240deg 270deg, var(--o) 270deg 300deg,
-    var(--y) 300deg 330deg, var(--o) 330deg 360deg);
-  border:10px solid #fff; box-shadow: inset 0 0 0 10px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.10);
-  --spin: 0deg; --R: 120px; --icon: 72px; z-index:1; pointer-events:none; overflow:hidden }
-.wheel::after{content:"";position:absolute;inset:0;margin:auto;width:18%;aspect-ratio:1/1;border-radius:50%;background:radial-gradient(#fff,#ffe6a8 55%,#ffd66d);border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:2}
+    .wheel{
+      position:absolute; inset:0; border-radius:50%;
+      background:conic-gradient(from -15deg,
+        var(--y) 0deg 30deg, var(--o) 30deg 60deg,
+        var(--y) 60deg 90deg, var(--o) 90deg 120deg,
+        var(--y) 120deg 150deg, var(--o) 150deg 180deg,
+        var(--y) 180deg 210deg, var(--o) 210deg 240deg,
+        var(--y) 240deg 270deg, var(--o) 270deg 300deg,
+        var(--y) 300deg 330deg, var(--o) 330deg 360deg);
+      border:10px solid #fff; box-shadow: inset 0 0 0 10px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.10);
+      --spin: 0deg; --R: 120px; --icon: 72px;    /* динамика из JS */
+      z-index:1; pointer-events:none; overflow:hidden
+    }
+    .wheel::after{
+      content:"";position:absolute;inset:0;margin:auto;width:18%;aspect-ratio:1/1;border-radius:50%;
+      background:radial-gradient(#fff,#ffe6a8 55%,#ffd66d);border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:2
+    }
 
-/* Слоты с иконками */
-.slot{position:absolute;inset:0;transform-origin:50% 50%;z-index:2}
-.slot-inner{ position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) translate(0, calc(-1 * var(--R))); }
-.slot-inner img{ width:var(--icon); height:var(--icon); object-fit:contain; display:block; transform: rotate(calc(-1 * var(--spin))); filter:drop-shadow(0 2px 6px rgba(0,0,0,.12)); pointer-events:none }
+    /* Слоты с иконками */
+    .slot{position:absolute;inset:0;transform-origin:50% 50%;z-index:2}
+    .slot-inner{ position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) translate(0, calc(-1 * var(--R))); }
+    .slot-inner img{
+      width:var(--icon); height:var(--icon); object-fit:contain; display:block;
+      transform: rotate(calc(-1 * var(--spin))); filter:drop-shadow(0 2px 6px rgba(0,0,0,.12)); pointer-events:none
+    }
 
-.controls{display:grid;gap:10px;margin-top:8px;position:relative;z-index:4}
-.msg{min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 12px;border-radius:12px;background:#fff8d8;border:1px solid #ffe5a3}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;user-select:none;background:linear-gradient(180deg,#FFBA08,#ffc43a 40%,#ffb60f);color:#3a2a00;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:14px 18px;border:0;border-radius:999px;box-shadow:0 10px 18px rgba(233,147,0,.28),0 3px 0 #eaa200 inset;transition:transform .08s ease}
-.btn:active{transform:translateY(1px)}
-.btn[disabled]{opacity:.55;cursor:not-allowed}
+    .controls{display:grid;gap:10px;margin-top:8px;position:relative;z-index:10;width:100%}
+    .msg{min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;
+      padding:8px 12px;border-radius:12px;background:#fff8d8;border:1px solid #ffe5a3}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;user-select:none;
+      background:linear-gradient(180deg,#FFBA08,#ffc43a 40%,#ffb60f);color:#3a2a00;font-weight:800;letter-spacing:.3px;
+      text-transform:uppercase;padding:14px 18px;border:0;border-radius:999px;
+      box-shadow:0 10px 18px rgba(233,147,0,.28),0 3px 0 #eaa200 inset;transition:transform .08s ease
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn[disabled]{opacity:.55;cursor:not-allowed}
 
-.amulet-bar{margin-top:10px;display:flex;align-items:center;gap:16px;padding:12px 14px;border-radius:16px;background:linear-gradient(180deg,#fffdf3,#fff9df);border:2px dashed #ffc84a;box-shadow:0 8px 18px rgba(0,0,0,.06)}
-.amulet{width:88px;height:88px;border-radius:16px;background:#fff;border:3px solid #ffd27a;display:grid;place-items:center;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,.08);cursor:pointer}
-.amulet.locked img{filter:grayscale(.92) opacity(.5)}
-.amulet img{width:92%;height:92%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.12))}
-.ok{color:var(--ok);font-weight:700} .err{color:var(--err);font-weight:700}
+    .amulet-bar{margin-top:10px;display:flex;align-items:center;gap:16px;padding:12px 14px;border-radius:16px;
+      background:linear-gradient(180deg,#fffdf3,#fff9df);border:2px dashed #ffc84a;box-shadow:0 8px 18px rgba(0,0,0,.06);width:100%;position:relative;z-index:10}
+    .amulet{width:88px;height:88px;border-radius:16px;background:#fff;border:3px solid #ffd27a;display:grid;place-items:center;
+      overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,.08);cursor:pointer}
+    .amulet.locked img{filter:grayscale(.92) opacity(.5)}
+    .amulet img{width:92%;height:92%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.12))}
+    .ok{color:var(--ok);font-weight:700} .err{color:var(--err);font-weight:700}
 
-.result{display:none;gap:12px}
-.result .thumb{width:clamp(220px, 26vmin, 320px);aspect-ratio:1/1;border-radius:18px;border:8px solid #fff;box-shadow:0 6px 22px rgba(0,0,0,.12);overflow:hidden;background:#fff;display:grid;place-items:center}
-.result .thumb img{width:100%;height:100%;object-fit:contain}
-.result .text{font-size:clamp(15px,2.7vw,18px)}
+    .result{display:none;gap:12px;align-content:start}
+    .result .thumb{
+      width:clamp(220px, 26vmin, 320px); aspect-ratio:1/1;border-radius:18px;border:8px solid #fff;
+      box-shadow:0 6px 22px rgba(0,0,0,.12);overflow:hidden;background:#fff;display:grid;place-items:center
+    }
+    .result .thumb img{width:100%;height:100%;object-fit:contain}
+    .result .text{font-size:clamp(15px,2.7vw,18px)}
 
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);padding:10px 14px;border-radius:12px;background:#101010;color:#fff;box-shadow:0 12px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s ease}
-.toast.show{opacity:1}
+    .toast{
+      position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+      padding:10px 14px;border-radius:12px;background:#101010;color:#fff;
+      box-shadow:0 12px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s ease
+    }
+    .toast.show{opacity:1}
 
-/* Модал для амулета */
-.amul-modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.45);z-index:2000}
-.amul-modal.open{display:grid;animation:fade .18s ease-out}
-@keyframes fade{from{opacity:0}to{opacity:1}}
-.amul-modal__content{position:relative;background:linear-gradient(180deg,#fffdf6,#fff8dc);padding:18px;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.35);border:2px solid #ffe29e}
-.amul-modal__content img{width:min(80vw,380px);height:auto;display:block}
-.amul-close{position:absolute;top:10px;right:10px;font-size:22px;line-height:1;background:#fff;border:1px solid #ffe29e;border-radius:999px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer}
+    /* Модал амулета */
+    .amul-modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.45);z-index:2000}
+    .amul-modal.open{display:grid;animation:fade .18s ease-out}
+    @keyframes fade{from{opacity:0}to{opacity:1}}
+    .amul-modal__content{position:relative;background:linear-gradient(180deg,#fffdf6,#fff8dc);padding:18px;border-radius:18px;
+      box-shadow:0 20px 50px rgba(0,0,0,.35);border:2px solid #ffe29e}
+    .amul-modal__content img{width:min(80vw,380px);height:auto;display:block}
+    .amul-close{position:absolute;top:10px;right:10px;font-size:22px;line-height:1;background:#fff;border:1px solid #ffe29e;
+      border-radius:999px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer}
 
+    /* === На десктопе колесо выше шапки === */
+    @media (min-width: 1024px){
+      .site-header{ z-index: 5; }  /* опускаем слой шапки */
+      .wheel-box{ z-index: 10; }   /* колесо поверх */
+      .controls, .amulet-bar{ z-index: 10; }
+    }
   </style>
 </head>
 <body>
   <!-- Шапка с логотипом -->
-  <header class="site-header"><img class="brand" src="logo.png" alt="ШАГАЙ ДОМА — логотип"></header>  <main class="app">
+  <header class="site-header"><img class="brand" src="logo.png" alt="ШАГАЙ ДОМА — логотип"></header>
+
+  <main class="app">
     <section class="card">
-      <div class="title">Колесо стройности</div>
-      <div class="subtitle">Вращайте колесо. <b>Остановите на съедобном</b> — и получите амулет!</div><div class="play">
-    <div class="wheel-col">
-      <div class="wheel-box">
-        <div class="pointer"></div>
-        <div id="wheel" class="wheel" aria-hidden="true"></div>
-      </div>
-      <div class="controls">
-        <div id="msg" class="msg">Нажмите «Вращать», чтобы запустить колесо удачи.</div>
-        <button id="btn" class="btn">Вращать</button>
-      </div>
-      <div class="amulet-bar">
-        <div id="amuletCell" class="amulet locked" title="Нажмите, чтобы увеличить"><img src="amulet.png" alt="амулет"></div>
-        <div>
-          <div id="amuletStatus">Амулет на сегодня ещё <span class="err">не получен</span>.</div>
-          <div id="amuletHint" style="font-size:12px;color:#666">Поймайте съедобное — и амулет будет ваш. Ограничение: 1 в день.</div>
+      <h1 class="title">Колесо стройности</h1>
+      <p class="subtitle">Вращайте колесо. <b>Остановите на съедобном</b> — и получите амулет!</p>
+
+      <div class="play">
+        <div class="wheel-col">
+          <div class="wheel-box">
+            <div class="pointer"></div>
+            <div id="wheel" class="wheel" aria-hidden="true"></div>
+          </div>
+          <div class="controls">
+            <div id="msg" class="msg">Нажмите «Вращать», чтобы запустить колесо удачи.</div>
+            <button id="btn" class="btn">Вращать</button>
+          </div>
+          <div class="amulet-bar">
+            <div id="amuletCell" class="amulet locked" title="Нажмите, чтобы увеличить"><img src="amulet.png" alt="амулет"></div>
+            <div>
+              <div id="amuletStatus">Амулет на сегодня ещё <span class="err">не получен</span>.</div>
+              <div id="amuletHint" style="font-size:12px;color:#666">Поймайте съедобное — и амулет будет ваш. Ограничение: 1 в день.</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="resultWrap" class="result">
+          <div class="thumb" id="resultThumb" aria-live="polite" aria-atomic="true">
+            <img id="resultImg" alt="Результат" src=""/>
+          </div>
+          <div id="resultText" class="text"></div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div id="resultWrap" class="result">
-      <div class="thumb" id="resultThumb" aria-live="polite" aria-atomic="true">
-        <img id="resultImg" alt="Результат" src=""/>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="amuletModal" class="amul-modal" aria-hidden="true">
+      <div class="amul-modal__content" role="dialog" aria-modal="true" aria-label="Увеличенный амулет">
+        <button class="amul-close" type="button" aria-label="Закрыть">×</button>
+        <img src="amulet.png" alt="Амулет крупно" />
       </div>
-      <div id="resultText" class="text"></div>
     </div>
-  </div>
-</section>
+  </main>
 
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
-<div id="amuletModal" class="amul-modal" aria-hidden="true">
-  <div class="amul-modal__content" role="dialog" aria-modal="true" aria-label="Увеличенный амулет">
-    <button class="amul-close" type="button" aria-label="Закрыть">×</button>
-    <img src="amulet.png" alt="Амулет крупно" />
-  </div>
-</div>
-
-  </main>  <script>
+  <script>
     /* === Данные === */
     const UNSAFE = ['bug.png','bug1.png','bug2.png','bug3.png','bug4.png','bug5.png','bug6.png','bug7.png','bug8.png','bug9.png','burger.png'];
     const SAFE   = ['chicken.png'];
     const ORDER  = [...UNSAFE, ...SAFE]; // 12 шт.
     let layout = [...ORDER];
 
-    const MESSAGES = { start:'Нажмите «Вращать», чтобы запустить колесо удачи.', stopCall:'Остановите колесо на   <b>съедобном</b>, чтобы получить амулет!', thinking:'Колесо крутится…', stopped:'Колесо остановлено. Смотрим результат…' };
+    const MESSAGES = {
+      start:'Нажмите «Вращать», чтобы запустить колесо удачи.',
+      stopCall:'Остановите колесо на <b>съедобном</b>, чтобы получить амулет!',
+      thinking:'Колесо крутится…',
+      stopped:'Колесо остановлено. Смотрим результат…'
+    };
 
     /* === Ограничение амулета 1/день === */
     const LS_KEY = 'sd_amulet_claimed_on_v1';
@@ -147,6 +215,7 @@
     const toast = document.getElementById('toast');
     const amuletModal = document.getElementById('amuletModal');
     const amulCloseBtn = amuletModal.querySelector('.amul-close');
+    const headerEl = document.querySelector('.site-header');
 
     /* === Состояния === */
     const STATE = { IDLE:'IDLE', SPINNING:'SPINNING', WAITING_STOP:'WAITING_STOP', RESULT:'RESULT' };
@@ -182,17 +251,54 @@
       [res[ic], res[swapWith]] = [res[swapWith], res[ic]]; return res;
     }
 
+    /* Поднимаем контент ниже шапки */
+    function padForHeader(){
+      const h = headerEl ? headerEl.offsetHeight : 0;
+      document.documentElement.style.setProperty('--hdr', h + 'px');
+    }
+
+    /* Парсим значение --wheelMax (px или vw) в пиксели */
+    function getWheelMaxPx(){
+      const raw = getComputedStyle(document.documentElement).getPropertyValue('--wheelMax').trim();
+      if (!raw) return 520;
+      if (raw.endsWith('vw')) return Math.max(200, (parseFloat(raw)||0) * window.innerWidth / 100);
+      if (raw.endsWith('px')) return Math.max(200, parseFloat(raw)||520);
+      const n = parseFloat(raw);
+      return isNaN(n) ? 520 : Math.max(200, n);
+    }
+
+    /* Размер колеса под ширину И высоту окна (чтобы кнопка была видна) */
+    function sizeWheelBox(){
+      const wb = document.querySelector('.wheel-box');
+      if(!wb) return;
+
+      const cssMax = getWheelMaxPx();
+      const col = wb.closest('.wheel-col') || wb.parentElement;
+      const colW = col ? col.clientWidth : (wb.parentElement ? wb.parentElement.clientWidth : window.innerWidth);
+
+      const maxByWidth = Math.min(
+        colW - 24,              // не шире своей колонки
+        cssMax,                 // верхний предел из CSS-переменной
+        window.innerWidth * 0.9 // небольшой отступ от краёв окна
+      );
+
+      const headerH = headerEl?.offsetHeight || 0;
+      const reserve = 340; // место под подписи/кнопку/амулет
+      const maxByHeight = Math.max(260, window.innerHeight - headerH - reserve);
+
+      const size = Math.max(260, Math.min(maxByWidth, maxByHeight));
+      wb.style.width  = size + 'px';
+      wb.style.height = size + 'px';
+
+      const icon = Math.round(Math.max(56, Math.min(size * 0.18, 96)));
+      const R    = Math.round(size/2 - icon/2 - 18);
+      wheel.style.setProperty('--R',    R + 'px');
+      wheel.style.setProperty('--icon', icon + 'px');
+    }
+
     /* Рисуем иконки по кругу */
     function buildSlots(){
-      const size = wheel.offsetWidth || 300;            // диаметр колеса
-      const icon = Math.round(Math.max(48, Math.min(size*0.18, 84))); // 18% от диаметра, 48–84px
-      const R = Math.round(size/2 - icon/2 - 18);       // до края, минус половина иконки и отступ
-      wheel.style.setProperty('--R', R + 'px');
-      wheel.style.setProperty('--icon', icon + 'px');
-
-      // очистить
       [...wheel.querySelectorAll('.slot')].forEach(n=>n.remove());
-
       layout.forEach((file, i)=>{
         const slot = document.createElement('div');
         slot.className = 'slot';
@@ -209,6 +315,7 @@
     function startSpin(){
       if (state !== STATE.IDLE && state !== STATE.RESULT) return;
       layout = shuffleWithConstraint(ORDER);
+      sizeWheelBox();
       buildSlots();
       angle = 0; applyWheelRotation();
       if (resultWrap) resultWrap.style.display = 'none';
@@ -244,16 +351,33 @@
       if (resultWrap) resultWrap.style.display = 'grid';
       resultImg.src=file; resultImg.alt='Выпало: '+file; resultImg.style.display='block';
       if (file==='burger.png'){
-        resultText.innerHTML = '<b style="color:var(--err)">Ой!</b> Шаман Галина увидела ваш ответ и сильно разозлилась!<br>Нет‑нет. Такое мы на нашем острове стройности не едим!'; showToast('Бургер — несъедобное для острова');
+        resultText.innerHTML = '<b style="color:var(--err)">Ой!</b> Шаман Галина увидела ваш ответ и сильно разозлилась!<br>Нет-нет. Такое мы на нашем острове стройности не едим!';
+        showToast('Бургер — несъедобное для острова');
       } else if (file==='chicken.png'){
-        if(!amuletClaimedToday()){ setAmuletClaimed(); updateAmuletBar(); resultText.innerHTML='<b class="ok">Поздравляем!</b> Это съедобное. Амулет ваш!'; pulseAmulet(); try{ if(navigator.vibrate) navigator.vibrate([30,40,30]); }catch(e){} try{ new Audio('win.mp3').play().catch(()=>{});}catch(e){} }
-        else { resultText.innerHTML='Это съедобное, но лимит амулетов на сегодня уже исчерпан. Приходите завтра!'; showToast('Амулет уже получен сегодня'); }
+        if(!amuletClaimedToday()){
+          setAmuletClaimed(); updateAmuletBar();
+          resultText.innerHTML='<b class="ok">Поздравляем!</b> Это съедобное. Амулет ваш!';
+          pulseAmulet();
+          try{ if(navigator.vibrate) navigator.vibrate([30,40,30]); }catch(e){}
+          try{ new Audio('win.mp3').play().catch(()=>{});}catch(e){}
+        } else {
+          resultText.innerHTML='Это съедобное, но лимит амулетов на сегодня уже исчерпан. Приходите завтра!';
+          showToast('Амулет уже получен сегодня');
+        }
       } else {
-        resultText.textContent='Несъедобное… Попробуйте ещё раз!'; showToast('Увы, не съедобное');
+        resultText.textContent='Несъедобное… Попробуйте ещё раз!';
+        showToast('Увы, не съедобное');
       }
     }
 
-    function pulseAmulet(){ amuletCell.animate([{transform:'scale(1)',filter:'drop-shadow(0 0 0 rgba(0,0,0,0))'},{transform:'scale(1.12)',filter:'drop-shadow(0 8px 16px rgba(0,0,0,.18))'},{transform:'scale(1)'}],{duration:700,easing:'cubic-bezier(.2,.9,.2,1)'}); }
+    function pulseAmulet(){
+      amuletCell.animate(
+        [{transform:'scale(1)',filter:'drop-shadow(0 0 0 rgba(0,0,0,0))'},
+         {transform:'scale(1.12)',filter:'drop-shadow(0 8px 16px rgba(0,0,0,.18))'},
+         {transform:'scale(1)'}],
+        {duration:700,easing:'cubic-bezier(.2,.9,.2,1)'}
+      );
+    }
 
     /* Кнопки/клавиши */
     btn.addEventListener('click', ()=>{ if (state===STATE.IDLE||state===STATE.RESULT){ startSpin(); } else if (state===STATE.SPINNING||state===STATE.WAITING_STOP){ stopSpinAndResolve(); } });
@@ -267,10 +391,18 @@
 
     // Инициализация
     (function init(){
-      setMsg(MESSAGES.start); updateAmuletBar(); preloadImages(['amulet.png','logo.png', ...ORDER, 'stop.mp3','win.mp3']);
-      layout = shuffleWithConstraint(ORDER); buildSlots(); if (resultWrap) resultWrap.style.display='none';
-      // применяем первоначальный угол (0) — для корректной контр‑ротации
+      padForHeader();
+      setMsg(MESSAGES.start);
+      updateAmuletBar();
+      preloadImages(['amulet.png','logo.png', ...ORDER, 'stop.mp3','win.mp3']);
+      layout = shuffleWithConstraint(ORDER);
+      sizeWheelBox();
+      buildSlots();
+      if (resultWrap) resultWrap.style.display='none';
       applyWheelRotation();
+      window.addEventListener('load', padForHeader);
+      window.addEventListener('resize', ()=>{ padForHeader(); sizeWheelBox(); buildSlots(); });
     })();
-  </script></body>
+  </script>
+</body>
 </html>

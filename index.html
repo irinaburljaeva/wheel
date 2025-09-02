@@ -25,8 +25,8 @@
   <style>
     :root{
       --r:#CF2C02; --y:#FFBA08; --o:#E85D04; --txt:#1a1a1a; --ok:#18a957; --err:#c02626;
-      --hdr:0px;                 /* высота шапки (ставится из JS) */
-      --wheelMax:480px;          /* верхний предел диаметра колеса на ПК — меняйте по вкусу */
+      --hdr:0px;                 /* высота шапки (ставится из JS на мобилке) */
+      --wheelMax:480px;          /* базовый предел для колеса (мобайл/тач) */
     }
 
     *{box-sizing:border-box}
@@ -48,7 +48,7 @@
     }
     .brand{display:block; width:clamp(96px,12vw,180px); height:auto}
 
-    /* Контейнер страницы — учитываем высоту хедера */
+    /* Контейнер страницы — учитываем высоту хедера на мобилке */
     .app{width:min(1100px,96vw); margin:calc(var(--hdr) + 12px) auto 16px; padding:0 12px}
 
     /* Карточка игры */
@@ -60,15 +60,14 @@
     .subtitle{margin:0;color:#444;font-size:clamp(14px,2.5vw,16px)}
 
     .play{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
-    @media (min-width:1024px){ .play{grid-template-columns:1fr 1fr} }
 
     /* Колесо */
     .wheel-col{display:flex;flex-direction:column;align-items:center}
     .wheel-box{
       position:relative;
-      width:min(100%, var(--wheelMax));  /* НИКОГДА не шире контейнера (фикс моб. переполнения) */
+      width:min(100%, var(--wheelMax));  /* НИКОГДА не шире контейнера (мобайл фикс) */
       height:auto;
-      margin-inline:auto; margin-top:clamp(20px,6vw,48px);
+      margin-inline:auto; margin-top:clamp(16px,5vw,32px);
       z-index:10;
       pointer-events:none; /* колесо не перехватывает клики поверх кнопки */
     }
@@ -133,10 +132,15 @@
     .result .thumb img{width:100%;height:100%;object-fit:contain}
     .result .text{font-size:clamp(15px,2.7vw,18px)}
 
+    /* Всплывающее уведомление — ВСЕГДА сверху */
     .toast{
-      position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+      position:fixed;
+      top:max(12px, env(safe-area-inset-top, 0px) + 12px);
+      left:50%; transform:translateX(-50%);
+      z-index:3000;
       padding:10px 14px;border-radius:12px;background:#101010;color:#fff;
-      box-shadow:0 12px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s ease
+      box-shadow:0 12px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s ease;
+      width:max-content; max-width:92vw; text-align:center;
     }
     .toast.show{opacity:1}
 
@@ -150,29 +154,32 @@
     .amul-close{position:absolute;top:10px;right:10px;font-size:22px;line-height:1;background:#fff;border:1px solid #ffe29e;
       border-radius:999px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer}
 
-    /* Desktop: вся белая карточка поверх шапки при прокрутке */
+    /* ===== Десктопные правки ===== */
     @media (min-width:1024px){
+      /* вся белая карточка перекрывает шапку при прокрутке */
       .site-header{ z-index:0; }
       .card{ position:relative; z-index:10; }
-    }
 
-    /* Мобильная подгонка: ничего не вылезает за края */
-    @media (max-width:1023.98px){
-      .app{ padding: 0 10px; }
-      .card{ padding: 16px 12px; }
-      .result .thumb{ width: min(80vw, 320px); }
-      .result .text{ text-align:center; max-width:90vw; }
-    }
+      /* колесо крупнее и ближе к заголовку; зазор сверху меньше */
+      :root{ --wheelMax:560px; }
+      .wheel-box{ margin-top:16px; }
 
-    /* Раскладка результата */
+      /* меньше зазор между шапкой и карточкой на ПК */
+      .app{ margin:12px auto 16px; }
+    }
+    @media (min-width:1440px){ :root{ --wheelMax:600px; } }
+    @media (min-width:1680px){ :root{ --wheelMax:640px; } }
+
+    /* Раскладка результата: мобайл по центру, ПК — справа узкая колонка */
     .result.show{ display:block; } /* дефолт (перекрывается ниже) */
     @media (max-width:1023.98px){
       .result.show{ display:grid; justify-items:center; row-gap:12px; }
+      .result .text{ text-align:center; max-width:90vw; }
     }
     @media (min-width:1024px){
       .play{
-        grid-template-columns: 1fr minmax(320px, 420px);
-        column-gap: 32px; align-items:start;
+        grid-template-columns: minmax(560px,1fr) 360px; /* колесо | правая колонка результата */
+        column-gap:32px; align-items:start;
       }
       .result.show{
         display:flex; flex-direction:column; align-items:flex-end; gap:12px;
@@ -296,7 +303,7 @@
       [res[ic], res[swapWith]] = [res[swapWith], res[ic]]; return res;
     }
 
-    /* Поднимаем контент ниже шапки */
+    /* Учитываем высоту шапки на мобилке */
     function padForHeader(){
       const h = headerEl ? headerEl.offsetHeight : 0;
       document.documentElement.style.setProperty('--hdr', h + 'px');
@@ -390,9 +397,12 @@
 
     function onForcedStopResult(file){
       try{ if(navigator.vibrate) navigator.vibrate(60);}catch(e){}
+      function onForcedStopResult(file){
+      try{ if(navigator.vibrate) navigator.vibrate(60);}catch(e){}
       try{ new Audio('stop.mp3').play().catch(()=>{});}catch(e){}
       showResult(file); btn.disabled=false; btn.textContent='Сыграть ещё'; setMsg(MESSAGES.start); setState(STATE.RESULT);
-        }
+    }
+
     function showResult(file){
       if (resultWrap){ resultWrap.style.display = ''; resultWrap.classList.add('show'); }
       resultImg.src=file; resultImg.alt='Выпало: '+file; resultImg.style.display='block';
